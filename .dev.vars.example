@@ -1,0 +1,10 @@
+# Copy to .dev.vars for local development only. Never commit real values.
+NOTION_TOKEN=
+INTERNAL_INGEST_TOKEN=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+
+# Optional / later phases
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REFRESH_TOKEN=
