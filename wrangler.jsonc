@@ -1,0 +1,71 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "world-monitor",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-04",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./public"
+  },
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
+  "queues": {
+    "producers": [
+      {
+        "queue": "world-intel-collect",
+        "binding": "COLLECT_QUEUE"
+      },
+      {
+        "queue": "world-intel-analyze",
+        "binding": "ANALYZE_QUEUE"
+      },
+      {
+        "queue": "world-intel-notion",
+        "binding": "NOTION_QUEUE"
+      },
+      {
+        "queue": "world-intel-alert",
+        "binding": "ALERT_QUEUE"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "world-intel-collect"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "world-intel-core",
+      "database_id": "aed42027-fbdf-4d83-ae76-1dce3bcace44",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "USGS_FEED_URL": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson",
+    "GDACS_FEED_URL": "https://www.gdacs.org/xml/rss.xml",
+    "OFFICIAL_RSS_FEEDS": "[]",
+    "AI_MODEL": "",
+    "MAX_COLLECTOR_RUNS_PER_SCHEDULE": "6",
+    "USGS_MAX_ITEMS": "120",
+    "GDACS_MAX_ITEMS": "40",
+    "OFFICIAL_RSS_MAX_ITEMS_PER_FEED": "30",
+    "FREE_TIER_DAILY_REQUEST_SOFT_LIMIT": "90000",
+    "FREE_TIER_DAILY_COLLECTOR_RUN_SOFT_LIMIT": "250",
+    "AI_DAILY_REQUEST_SOFT_LIMIT": "100",
+    "AI_DAILY_ESTIMATED_UNIT_SOFT_LIMIT": "100000",
+    "NOTIFICATION_ENABLE_AFTER": "",
+    "NOTION_ALERTS_DATA_SOURCE_ID": "50c2ebd7-9c0a-4967-85ac-63b4d98c09be",
+    "NOTION_EVENTS_DATA_SOURCE_ID": "857d1c29-dadc-4f05-a82c-515b41a63422",
+    "NOTION_TRENDS_DATA_SOURCE_ID": "9ed4cbc1-92b5-4f67-a00d-90fdcab06854",
+    "NOTION_SCENARIOS_DATA_SOURCE_ID": "78ca568e-6ac2-4ce3-a431-add659365536",
+    "NOTION_INDICATORS_DATA_SOURCE_ID": "790126bc-40f3-4e5c-9af2-f12ad1cfeb15",
+    "NOTION_ASSESSMENTS_DATA_SOURCE_ID": "c4e0e252-d6ef-4c62-a24e-2e674419b0dc",
+    "NOTION_FORECAST_LEDGER_DATA_SOURCE_ID": "dc0d6362-4364-4b4c-8850-f59a369a08a6",
+    "NOTION_HIGH_VALUE_CLAIMS_DATA_SOURCE_ID": "c5954dea-fb73-424e-9680-a38a679cf261",
+    "NOTION_SOURCES_DATA_SOURCE_ID": "6cfe72ee-5fcb-41de-ade8-4efc436e41f0",
+    "NOTION_SYSTEM_HEALTH_DATA_SOURCE_ID": "34caf045-0c93-46b3-9d5a-14f4f635588c"
+  }
+}

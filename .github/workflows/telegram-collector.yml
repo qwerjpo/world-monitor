@@ -1,0 +1,25 @@
+name: Telegram collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install -r telegram/requirements.txt
+      - run: python telegram/collector.py
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
+          TELEGRAM_CHANNELS: ${{ vars.TELEGRAM_CHANNELS }}
+          TELEGRAM_LIMIT_PER_CHANNEL: ${{ vars.TELEGRAM_LIMIT_PER_CHANNEL }}
+          CF_INGEST_URL: ${{ secrets.CF_INGEST_URL }}
+          CF_INGEST_TOKEN: ${{ secrets.CF_INGEST_TOKEN }}

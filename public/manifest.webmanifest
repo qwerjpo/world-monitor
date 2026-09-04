@@ -1,0 +1,9 @@
+{
+  "name": "World Intelligence Watch System",
+  "short_name": "World Monitor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101418",
+  "theme_color": "#101418",
+  "icons": []
+}

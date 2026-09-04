@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101418">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="/styles.css">
+    <title>World Monitor</title>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>World Monitor</h1>
+          <p id="status-line">Checking system health...</p>
+        </div>
+        <button id="refresh" type="button" aria-label="Refresh">Refresh</button>
+      </section>
+
+      <section class="summary-grid" aria-label="System summary">
+        <article>
+          <span>Service</span>
+          <strong id="service">-</strong>
+        </article>
+        <article>
+          <span>Budget</span>
+          <strong id="budget">-</strong>
+        </article>
+        <article>
+          <span>Notion</span>
+          <strong id="notion">-</strong>
+        </article>
+        <article>
+          <span>Telegram</span>
+          <strong id="telegram">-</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>Collector Health</h2>
+          <span id="scheduler">-</span>
+        </div>
+        <div id="collectors" class="list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>Active Alerts</h2>
+        </div>
+        <div id="alerts" class="list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>Tracked Events</h2>
+        </div>
+        <div id="events" class="list"></div>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

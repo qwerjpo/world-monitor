@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS source_endpoints (
   id TEXT PRIMARY KEY,
   source_id TEXT NOT NULL REFERENCES sources(id),
   endpoint_type TEXT NOT NULL,
-  url TEXT,
-  channel_id TEXT,
+  url TEXT NOT NULL DEFAULT '',
+  channel_id TEXT NOT NULL DEFAULT '',
   api_name TEXT,
   parser TEXT,
   poll_interval INTEGER,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS source_endpoints (
   failure_count INTEGER NOT NULL DEFAULT 0,
   health_status TEXT NOT NULL DEFAULT 'UNKNOWN',
   enabled INTEGER NOT NULL DEFAULT 1,
-  UNIQUE(source_id, endpoint_type, COALESCE(url,''), COALESCE(channel_id,''))
+  UNIQUE(source_id, endpoint_type, url, channel_id)
 );
 
 CREATE TABLE IF NOT EXISTS evidence (
