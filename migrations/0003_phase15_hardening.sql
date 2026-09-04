@@ -115,6 +115,8 @@ SELECT
   title || ' | ' || COALESCE(reason, ''),
   CASE
     WHEN audit_class = 'STALE/HISTORICAL' THEN 'Require recency/escalation signal for ongoing drought notifications; keep stale historical items visible but non-notifying.'
+    WHEN audit_class = 'THRESHOLD_FALSE_POSITIVE' THEN 'Require magnitude >= 6.0 for tsunami-flag WARNING and >= 7.0 for tsunami-flag CRITICAL; keep lower-magnitude tsunami-flag items as WATCH/tracking only.'
+    WHEN audit_class = 'TEST_GENERATED' THEN 'Exclude synthetic/manual verification alerts from operational metrics and Telegram eligibility unless explicitly marked operational.'
     ELSE NULL
   END
 FROM alerts
