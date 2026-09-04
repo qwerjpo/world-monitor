@@ -1,6 +1,16 @@
 import type { Env } from "../types";
 
-type ProjectionType = "alert" | "event" | "scenario" | "system_health";
+type ProjectionType =
+  | "alert"
+  | "event"
+  | "trend"
+  | "scenario"
+  | "indicator"
+  | "assessment"
+  | "forecast"
+  | "high_value_claim"
+  | "source"
+  | "system_health";
 type NotionPropertyType = "title" | "rich_text" | "select" | "status" | "date" | "number" | "checkbox" | "url";
 
 interface ProjectionRecord {
@@ -133,6 +143,23 @@ export async function retrieveNotionSchemaReport(env: Env): Promise<{ configured
     }
   }
   return { configured: true, schemas, errors };
+}
+
+export async function syncSyntheticNotionProjection(env: Env): Promise<{ configured: boolean; ok: boolean; objectId?: string; error?: string }> {
+  if (!env.NOTION_TOKEN) return { configured: false, ok: false, error: "NOTION_TOKEN is not configured" };
+  const dataSourceId = notionTargets(env).system_health;
+  if (!dataSourceId) return { configured: true, ok: false, error: "System Health data source ID is not configured" };
+  const objectId = "notion:synthetic-projection-test";
+  const ok = await syncRecord(env, "system_health", objectId, dataSourceId, {
+    name: "TEST: Notion schema-aware projection",
+    status: "TEST_GENERATED",
+    level: "integration_test",
+    summary: "Synthetic Notion projection test. D1 remains System of Record; this page is excluded from operational alert metrics.",
+    timestamp: new Date().toISOString(),
+    objectId,
+    objectType: "system_health"
+  });
+  return ok ? { configured: true, ok, objectId } : { configured: true, ok, objectId, error: "Projection request failed; see system_state notion:* entries" };
 }
 
 async function syncRecord(
@@ -295,7 +322,13 @@ function notionTargets(env: Env): Record<ProjectionType, string | undefined> {
   return {
     alert: env.NOTION_ALERTS_DATA_SOURCE_ID,
     event: env.NOTION_EVENTS_DATA_SOURCE_ID,
+    trend: env.NOTION_TRENDS_DATA_SOURCE_ID,
     scenario: env.NOTION_SCENARIOS_DATA_SOURCE_ID,
+    indicator: env.NOTION_INDICATORS_DATA_SOURCE_ID,
+    assessment: env.NOTION_ASSESSMENTS_DATA_SOURCE_ID,
+    forecast: env.NOTION_FORECAST_LEDGER_DATA_SOURCE_ID,
+    high_value_claim: env.NOTION_HIGH_VALUE_CLAIMS_DATA_SOURCE_ID,
+    source: env.NOTION_SOURCES_DATA_SOURCE_ID,
     system_health: env.NOTION_SYSTEM_HEALTH_DATA_SOURCE_ID
   };
 }

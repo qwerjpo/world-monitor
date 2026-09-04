@@ -1,6 +1,6 @@
 import { notifyPendingTelegramAlerts } from "./alerts/telegram";
 import { aiBudgetState, insertClaim, insertEvidence, ensureDefaults, queueDepths, recordSystemState, upsertAlert, upsertEvent } from "./db";
-import { retrieveNotionSchemaReport } from "./notion/sync";
+import { retrieveNotionSchemaReport, syncSyntheticNotionProjection } from "./notion/sync";
 import { runCollector, runScheduler } from "./scheduler";
 import type { AlertInput, ClaimInput, CollectorMessage, Env, EventInput } from "./types";
 import { bearerToken, errorJson, json, nowIso, readJson, sha256, stableId } from "./utils";
@@ -49,6 +49,7 @@ async function routeApi(request: Request, env: Env, ctx: ExecutionContext, url: 
   if (request.method === "POST" && url.pathname === "/admin/run-scheduler") return adminRunScheduler(request, env);
   if (request.method === "POST" && url.pathname === "/admin/run-collector") return adminRunCollector(request, env);
   if (request.method === "POST" && url.pathname === "/admin/notion/schema-report") return adminNotionSchemaReport(request, env);
+  if (request.method === "POST" && url.pathname === "/admin/notion/test-projection") return adminNotionTestProjection(request, env);
   return errorJson(404, "Route not found");
 }
 
@@ -297,6 +298,13 @@ async function adminNotionSchemaReport(request: Request, env: Env): Promise<Resp
   if (auth) return auth;
   const report = await retrieveNotionSchemaReport(env);
   return json({ ok: true, report });
+}
+
+async function adminNotionTestProjection(request: Request, env: Env): Promise<Response> {
+  const auth = requireIngestAuth(request, env);
+  if (auth) return auth;
+  const result = await syncSyntheticNotionProjection(env);
+  return json({ ok: result.ok, result }, { status: result.ok ? 200 : 502 });
 }
 
 function requireIngestAuth(request: Request, env: Env): Response | undefined {
