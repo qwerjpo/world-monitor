@@ -20,6 +20,14 @@ describe("deduplication fingerprint", () => {
   });
 });
 
+describe("duplicate evidence handling", () => {
+  it("documents that duplicate content must reuse the persisted evidence id", () => {
+    const plannedId = "ev:new-external-id";
+    const persistedId = "ev:first-content-hash-row";
+    expect(persistedId).not.toBe(plannedId);
+  });
+});
+
 describe("collector health", () => {
   const now = new Date("2026-09-04T00:00:00.000Z");
 

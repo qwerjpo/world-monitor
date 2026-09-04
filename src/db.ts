@@ -102,7 +102,21 @@ export async function insertEvidence(env: Env, input: EvidenceInput): Promise<In
     JSON.stringify(input.normalized)
   ).run();
 
-  return { id, inserted: (result.meta?.changes ?? 0) > 0 };
+  const inserted = (result.meta?.changes ?? 0) > 0;
+  if (inserted) return { id, inserted };
+
+  const existing = await env.DB.prepare(
+    `SELECT id FROM evidence
+     WHERE source_id = ?
+       AND (
+         (? IS NOT NULL AND external_id = ?)
+         OR content_hash = ?
+       )
+     ORDER BY first_seen_at ASC
+     LIMIT 1`
+  ).bind(input.sourceId, input.externalId ?? null, input.externalId ?? null, contentHash).first<{ id: string }>();
+
+  return { id: existing?.id ?? id, inserted: false };
 }
 
 export async function upsertEvent(env: Env, event: EventInput): Promise<void> {
