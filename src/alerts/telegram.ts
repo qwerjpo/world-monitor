@@ -10,8 +10,8 @@ export async function notifyPendingTelegramAlerts(env: Env): Promise<{ attempted
      WHERE status = 'ACTIVE'
        AND notification_sent = 0
        AND notification_eligible_at IS NOT NULL
-       AND notification_eligible_at <= CURRENT_TIMESTAMP
-       AND notification_eligible_at >= ?
+       AND datetime(notification_eligible_at) <= CURRENT_TIMESTAMP
+       AND datetime(notification_eligible_at) >= datetime(?)
        AND COALESCE(operational_metric, 1) = 1
        AND COALESCE(audit_class, 'REAL') NOT IN ('TEST_GENERATED', 'THRESHOLD_FALSE_POSITIVE', 'STALE/HISTORICAL')
        AND alert_level IN ('WARNING', 'CRITICAL')
