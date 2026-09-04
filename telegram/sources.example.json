@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "example_official_channel",
+      "handle": "durov",
+      "name": "Example public Telegram channel",
+      "type": "public_channel",
+      "enabled": false,
+      "category": "T6",
+      "language": "en",
+      "region": "global",
+      "domain": "platform",
+      "alignment": "official_or_primary",
+      "limitations": "Example only. Replace with a vetted public channel before enabling."
+    }
+  ]
+}

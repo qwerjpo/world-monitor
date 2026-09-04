@@ -3,5 +3,11 @@ node_modules/
 .dev.vars
 .env
 .env.*
+.secrets/
+*.session
+*.session-journal
+telethon.session*
+__pycache__/
+*.pyc
 dist/
 coverage/

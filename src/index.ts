@@ -222,11 +222,14 @@ async function ingestTelegram(request: Request, env: Env, _ctx: ExecutionContext
   } & Partial<TelegramIngestMessage>>(request);
   const messages = body.messages ?? (body.message_id || body.text ? [body as TelegramIngestMessage] : []);
   let inserted = 0;
+  const runId = stableId("run:telegram", crypto.randomUUID());
 
   for (const message of messages) {
     const channelId = String(message.channel_id ?? "unknown_channel");
     const sourceId = stableId("telegram", channelId);
-    await ensureManualSource(env, sourceId, `Telegram ${channelId}`, "telegram_channel");
+    const metadata = message.source_metadata ?? {};
+    const sourceName = typeof metadata.name === "string" && metadata.name ? metadata.name : `Telegram ${channelId}`;
+    await ensureManualSource(env, sourceId, sourceName, "telegram_channel");
     const externalId = `${channelId}:${message.message_id}`;
     const normalized = {
       source: "telegram",
@@ -238,7 +241,8 @@ async function ingestTelegram(request: Request, env: Env, _ctx: ExecutionContext
       editedAt: message.edit_date,
       forward: message.forward ?? null,
       permalink: message.permalink,
-      media: message.media ?? null
+      media: message.media ?? null,
+      sourceMetadata: metadata
     };
     const evidence = await insertEvidence(env, {
       sourceId,
@@ -274,7 +278,31 @@ async function ingestTelegram(request: Request, env: Env, _ctx: ExecutionContext
     }
   }
 
+  await recordTelegramCollectorHealth(env, runId, messages.length, inserted);
   return json({ ok: true, received: messages.length, inserted });
+}
+
+async function recordTelegramCollectorHealth(env: Env, runId: string, itemsFound: number, itemsNew: number): Promise<void> {
+  const now = nowIso();
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO collection_runs
+       (id, collector, started_at, finished_at, items_found, items_new, items_failed, api_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(runId, "telegram", now, now, itemsFound, itemsNew, 0, "OK"),
+    env.DB.prepare(
+      `INSERT INTO collector_health
+       (collector, last_success, expected_interval, consecutive_failures, data_gap_minutes, health, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(collector) DO UPDATE SET
+        last_success = excluded.last_success,
+        expected_interval = excluded.expected_interval,
+        consecutive_failures = excluded.consecutive_failures,
+        data_gap_minutes = excluded.data_gap_minutes,
+        health = excluded.health,
+        updated_at = excluded.updated_at`
+    ).bind("telegram", now, 15, 0, 0, "GREEN", now)
+  ]);
 }
 
 async function adminRunScheduler(request: Request, env: Env): Promise<Response> {
@@ -377,4 +405,5 @@ interface TelegramIngestMessage {
     message_id?: string | number;
     date?: string;
   } | null;
+  source_metadata?: Record<string, unknown>;
 }

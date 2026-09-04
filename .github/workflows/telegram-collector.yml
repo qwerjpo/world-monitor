@@ -19,7 +19,7 @@ jobs:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
-          TELEGRAM_CHANNELS: ${{ vars.TELEGRAM_CHANNELS }}
-          TELEGRAM_LIMIT_PER_CHANNEL: ${{ vars.TELEGRAM_LIMIT_PER_CHANNEL }}
+          TELEGRAM_SOURCES_JSON: ${{ vars.TELEGRAM_SOURCES_JSON }}
+          TELEGRAM_LIMIT_PER_SOURCE: ${{ vars.TELEGRAM_LIMIT_PER_SOURCE }}
           CF_INGEST_URL: ${{ secrets.CF_INGEST_URL }}
           CF_INGEST_TOKEN: ${{ secrets.CF_INGEST_TOKEN }}
