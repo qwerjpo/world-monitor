@@ -142,31 +142,30 @@ export async function upsertEvent(env: Env, event: EventInput): Promise<void> {
 }
 
 export async function insertClaim(env: Env, claim: ClaimInput, evidenceId: string, gate?: AnalysisGateInput): Promise<void> {
-  const statements = [
-    env.DB.prepare(
-      `INSERT OR IGNORE INTO claims
-       (id, claim_text, epistemic_tag, event_id, region, domain, p_score, i_score, v_score,
-        evidence_rank, event_confidence)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      claim.id,
-      claim.text,
-      claim.epistemicTag,
-      claim.eventId ?? null,
-      claim.region ?? null,
-      claim.domain ?? null,
-      claim.pScore,
-      claim.iScore,
-      claim.vScore,
-      claim.evidenceRank,
-      claim.eventConfidence
-    ),
-    env.DB.prepare(
-      `INSERT OR IGNORE INTO claim_evidence
-       (claim_id, evidence_id, relationship, independent_stream, supports, origin_group)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).bind(claim.id, evidenceId, "source_statement", claim.evidenceRank, 1, claim.evidenceRank)
-  ];
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO claims
+     (id, claim_text, epistemic_tag, event_id, region, domain, p_score, i_score, v_score,
+      evidence_rank, event_confidence)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    claim.id,
+    claim.text,
+    claim.epistemicTag,
+    claim.eventId ?? null,
+    claim.region ?? null,
+    claim.domain ?? null,
+    claim.pScore,
+    claim.iScore,
+    claim.vScore,
+    claim.evidenceRank,
+    claim.eventConfidence
+  ).run();
+
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO claim_evidence
+     (claim_id, evidence_id, relationship, independent_stream, supports, origin_group)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(claim.id, evidenceId, "source_statement", claim.evidenceRank, 1, claim.evidenceRank).run();
 
   const decision = decideAnalysisGate(gate ?? {
     collector: "manual",
@@ -175,23 +174,21 @@ export async function insertClaim(env: Env, claim: ClaimInput, evidenceId: strin
     eventConfidence: claim.eventConfidence,
     novelty: "NEW"
   });
-  statements.push(
-    env.DB.prepare(
-      `INSERT OR IGNORE INTO analysis_gate_decisions
-       (id, claim_id, evidence_id, decision, score, reason_json)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).bind(
-      stableId("gate", `${claim.id}:${evidenceId}`),
-      claim.id,
-      evidenceId,
-      decision.shouldQueue ? "QUEUE" : "SKIP",
-      decision.score,
-      JSON.stringify(decision.reasons)
-    )
-  );
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO analysis_gate_decisions
+     (id, claim_id, evidence_id, decision, score, reason_json)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(
+    stableId("gate", `${claim.id}:${evidenceId}`),
+    claim.id,
+    evidenceId,
+    decision.shouldQueue ? "QUEUE" : "SKIP",
+    decision.score,
+    JSON.stringify(decision.reasons)
+  ).run();
 
   if (decision.shouldQueue) {
-    statements.push(env.DB.prepare(
+    await env.DB.prepare(
       `INSERT OR IGNORE INTO analysis_queue
        (id, object_type, object_id, analysis_level, priority, reason, gate_status, gate_reason)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -204,10 +201,8 @@ export async function insertClaim(env: Env, claim: ClaimInput, evidenceId: strin
       "Deterministic materiality gate selected this candidate claim",
       "GATED",
       JSON.stringify(decision.reasons)
-    ));
+    ).run();
   }
-
-  await env.DB.batch(statements);
 }
 
 export async function upsertAlert(env: Env, alert: AlertInput): Promise<void> {
