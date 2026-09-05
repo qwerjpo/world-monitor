@@ -62,8 +62,10 @@ async def generate_session(output_path: Path, overwrite: bool) -> None:
     if not phone:
         raise RuntimeError("Telegram phone number is required")
 
+    client = TelegramClient(StringSession(), api_id, api_hash)
     try:
-        async with TelegramClient(StringSession(), api_id, api_hash) as client:
+        await client.connect()
+        if not await client.is_user_authorized():
             sent_code = await client.send_code_request(phone)
             code = getpass.getpass("Telegram login code (hidden): ").strip()
             try:
@@ -71,7 +73,7 @@ async def generate_session(output_path: Path, overwrite: bool) -> None:
             except SessionPasswordNeededError:
                 password = getpass.getpass("Telegram 2FA password (hidden): ")
                 await client.sign_in(password=password)
-            session = client.session.save()
+        session = client.session.save()
     except SendCodeUnavailableError as error:
         raise RuntimeError(
             "Telegram is not allowing another login code for this phone number right now. "
@@ -79,6 +81,8 @@ async def generate_session(output_path: Path, overwrite: bool) -> None:
         ) from error
     except RPCError as error:
         raise RuntimeError(f"Telegram rejected the login attempt: {error.__class__.__name__}") from error
+    finally:
+        await client.disconnect()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(session, encoding="utf-8")
