@@ -18,10 +18,13 @@ Optional GitHub Actions variables:
 Local session generation:
 
 ```powershell
+python -m pip install -r telegram/requirements.txt
 python scripts/generate_telethon_session.py
 ```
 
 The script prompts for credentials interactively, hides the sensitive inputs, writes only to `.secrets/telethon.session.txt`, and never prints the session value.
+
+If Telegram returns `SendCodeUnavailableError`, wait before retrying. It means Telegram is temporarily refusing another login code for that phone number because the available delivery options were recently used.
 
 Allowlist source categories:
 

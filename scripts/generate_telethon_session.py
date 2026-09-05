@@ -4,9 +4,17 @@ import getpass
 import os
 from pathlib import Path
 
-from telethon import TelegramClient
-from telethon.errors import SessionPasswordNeededError
-from telethon.sessions import StringSession
+try:
+    from telethon import TelegramClient
+    from telethon.errors import RPCError, SendCodeUnavailableError, SessionPasswordNeededError
+    from telethon.sessions import StringSession
+except ModuleNotFoundError as error:
+    if error.name != "telethon":
+        raise
+    raise SystemExit(
+        "Telethon is not installed. Run this first:\n"
+        "  python -m pip install -r telegram/requirements.txt"
+    ) from error
 
 
 DEFAULT_OUTPUT = Path(".secrets/telethon.session.txt")
@@ -54,15 +62,23 @@ async def generate_session(output_path: Path, overwrite: bool) -> None:
     if not phone:
         raise RuntimeError("Telegram phone number is required")
 
-    async with TelegramClient(StringSession(), api_id, api_hash) as client:
-        await client.send_code_request(phone)
-        code = getpass.getpass("Telegram login code (hidden): ").strip()
-        try:
-            await client.sign_in(phone=phone, code=code)
-        except SessionPasswordNeededError:
-            password = getpass.getpass("Telegram 2FA password (hidden): ")
-            await client.sign_in(password=password)
-        session = client.session.save()
+    try:
+        async with TelegramClient(StringSession(), api_id, api_hash) as client:
+            sent_code = await client.send_code_request(phone)
+            code = getpass.getpass("Telegram login code (hidden): ").strip()
+            try:
+                await client.sign_in(phone=phone, code=code, phone_code_hash=sent_code.phone_code_hash)
+            except SessionPasswordNeededError:
+                password = getpass.getpass("Telegram 2FA password (hidden): ")
+                await client.sign_in(password=password)
+            session = client.session.save()
+    except SendCodeUnavailableError as error:
+        raise RuntimeError(
+            "Telegram is not allowing another login code for this phone number right now. "
+            "Wait before retrying, then run the script again with --overwrite only if the output file already exists."
+        ) from error
+    except RPCError as error:
+        raise RuntimeError(f"Telegram rejected the login attempt: {error.__class__.__name__}") from error
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(session, encoding="utf-8")
